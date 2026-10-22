@@ -102,67 +102,19 @@ func TestMotionFilterDropsRepeatedCell(t *testing.T) {
 	}
 }
 
-func TestSetupAsksForCredentials(t *testing.T) {
+func TestModelUsesBuiltInCredentials(t *testing.T) {
+	dir := t.TempDir()
 	t.Setenv("TG_TUI_DEMO", "")
-	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-	t.Setenv("XDG_CACHE_HOME", t.TempDir())
+	t.Setenv("XDG_CONFIG_HOME", dir)
+	t.Setenv("XDG_CACHE_HOME", dir)
 	t.Setenv("TG_API_ID", "")
 	t.Setenv("TG_API_HASH", "")
 
 	m := newModel()
-	if m.setup == nil {
-		t.Fatal("expected the login screen instead of mock chats")
+	if m.bridge == nil {
+		t.Fatal("built-in app pair did not start a Telegram client")
 	}
-	if len(m.chats) != 0 {
-		t.Fatalf("mock chats shown on first run: %d", len(m.chats))
-	}
-	resize(m, 120, 36)
-	if got, _ := m.statusView(); !strings.Contains(got, "Sign in") {
-		t.Fatalf("status = %q", got)
-	}
-
-	// Invalid input stays on the screen and explains why.
-	m.setup.id.SetValue("abc")
-	m.setup.hash.SetValue("0123456789abcdef0123456789abcdef")
-	if cmd := m.submitSetup(); cmd != nil {
-		t.Fatal("invalid credentials started a connection")
-	}
-	if m.setup == nil || m.setup.err == "" {
-		t.Fatalf("expected an error on the setup screen, state=%+v", m.setup)
-	}
-
-	// Tab moves between the fields.
-	m.Update(tea.KeyPressMsg{Code: tea.KeyTab})
-	if m.setup.focus != 1 {
-		t.Fatalf("tab focus = %d", m.setup.focus)
-	}
-}
-
-func TestSetupScreenFitsWidth(t *testing.T) {
-	t.Setenv("TG_TUI_DEMO", "")
-	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-	t.Setenv("XDG_CACHE_HOME", t.TempDir())
-	t.Setenv("TG_API_ID", "")
-	t.Setenv("TG_API_HASH", "")
-
-	for _, size := range [][2]int{{120, 36}, {84, 24}, {70, 20}} {
-		m := newModel()
-		resize(m, size[0], size[1])
-		m.setup.err = "API hash must be 32 hex characters"
-		lines, x, y := m.renderSetup()
-		if len(lines) == 0 {
-			t.Fatalf("%dx%d: no panel", size[0], size[1])
-		}
-		want := ansi.StringWidth(lines[0])
-		for i, line := range lines {
-			if got := ansi.StringWidth(line); got != want {
-				t.Fatalf("%dx%d line %d width = %d, want %d", size[0], size[1], i, got, want)
-			}
-		}
-		if x < 0 || y < 0 || x+want > size[0] || y+len(lines) > size[1] {
-			t.Fatalf("%dx%d: panel at %d,%d size %dx%d does not fit", size[0], size[1], x, y, want, len(lines))
-		}
-	}
+	m.bridge.Close()
 }
 
 func TestReplyComposerFillsWidth(t *testing.T) {

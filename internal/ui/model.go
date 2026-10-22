@@ -85,7 +85,6 @@ type model struct {
 	tgStatus       string
 	tgErr          string
 	selfName       string
-	setup          *setupState
 	auth           *authState
 	authField      textinput.Model
 	historyLoading map[string]bool
@@ -158,22 +157,10 @@ func newModel() *model {
 		m.tgStatus = "config error"
 		m.tgErr = cfgErr.Error()
 		m.notice = cfgErr.Error()
-		m.setup = newSetupState()
 	case enabled:
 		m.startBridge(cfg)
-	case os.Getenv("TG_TUI_DEMO") == "1":
-		m.tgStatus = "demo"
 	default:
-		// No credentials yet: first run goes to the login screen, not to mock
-		// data. Submitting it saves config.json and starts the real session.
-		m.chats = nil
-		m.folders = []domain.Folder{
-			{ID: domain.FolderAll, Title: "All"},
-			{ID: domain.FolderArchive, Title: "Archive"},
-		}
-		m.active = -1
-		m.selected = 0
-		m.setup = newSetupState()
+		m.tgStatus = "demo"
 	}
 
 	if p, err := audio.New(); err != nil {
@@ -447,10 +434,6 @@ func (m *model) applyInputStyles() {
 	m.search.SetStyles(is)
 	m.authField.SetStyles(is)
 	m.attachField.SetStyles(is)
-	if m.setup != nil {
-		m.setup.id.SetStyles(is)
-		m.setup.hash.SetStyles(is)
-	}
 	if m.fwd != nil {
 		m.fwd.query.SetStyles(is)
 	}
@@ -550,9 +533,6 @@ func (m *model) close() tea.Cmd {
 
 func (m *model) handleKey(msg tea.KeyPressMsg) tea.Cmd {
 	key := msg.Keystroke()
-	if m.setup != nil {
-		return m.handleSetupKey(msg)
-	}
 	if m.auth != nil {
 		return m.handleAuthKey(msg)
 	}

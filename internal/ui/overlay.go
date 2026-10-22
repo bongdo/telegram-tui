@@ -563,9 +563,6 @@ func (m *model) viewerClick(e tea.Mouse) tea.Cmd {
 
 func (m *model) composeOverlays(base string) string {
 	switch {
-	case m.setup != nil:
-		lines, x, y := m.renderSetup()
-		return composeAt(base, lines, x, y)
 	case m.auth != nil:
 		lines, x, y := m.renderAuth()
 		return composeAt(base, lines, x, y)

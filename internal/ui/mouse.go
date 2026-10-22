@@ -14,9 +14,6 @@ func (m *model) handleClick(e tea.Mouse) tea.Cmd {
 	if g.status.contains(e.X, e.Y) && m.quitRect(g).contains(e.X, e.Y) {
 		return m.close()
 	}
-	if m.setup != nil {
-		return m.setupClick(e)
-	}
 	if m.auth != nil {
 		return m.authClick(e, g)
 	}
