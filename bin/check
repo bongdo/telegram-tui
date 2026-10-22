@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")/.."
+export GOFLAGS="${GOFLAGS:+$GOFLAGS }-p=1"
+
+out="$(gofmt -l .)"
+if [ -n "$out" ]; then
+  printf '%s\n' "$out" | sed 's/^/gofmt: /' >&2
+  echo "check: formatting" >&2
+  exit 1
+fi
+
+go vet ./...
+go build ./...
+go test ./...
+
+if [ -f .nocomments-baseline ]; then
+  nocomments --baseline .nocomments-baseline .
+else
+  nocomments .
+fi
+
+if [ -d docs/product ]; then
+  bin/spec status
+fi

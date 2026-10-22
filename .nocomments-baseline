@@ -1,0 +1,18 @@
+# legacy files with comments; remove a path when the file is rewritten
+internal/audio/player.go
+internal/chafa/chafa.go
+internal/domain/types.go
+internal/store/store.go
+internal/tgclient/bridge.go
+internal/tgclient/config.go
+internal/tgclient/download.go
+internal/tgclient/types.go
+internal/ui/conversation.go
+internal/ui/data.go
+internal/ui/layout.go
+internal/ui/model.go
+internal/ui/model_test.go
+internal/ui/mouse.go
+internal/ui/profile.go
+internal/ui/render.go
+internal/ui/theme.go

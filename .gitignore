@@ -1,0 +1,8 @@
+.env.local
+.agent/log/
+.agent/question
+dev.db
+*.db-wal
+*.db-shm
+/tg-matrix-tui
+*.test

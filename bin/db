@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+db="${DB_PATH:-dev.db}"
+dir="${MIGRATIONS_DIR:-migrations}"
+cmd="${1:-status}"
+
+applied() {
+  sqlite3 "$db" "CREATE TABLE IF NOT EXISTS schema_migrations(name TEXT PRIMARY KEY, at TEXT NOT NULL);"
+}
+
+case "$cmd" in
+  migrate)
+    applied
+    [ -d "$dir" ] || { echo "db: нет $dir" >&2; exit 1; }
+    for f in $(ls "$dir"/*.sql 2>/dev/null | sort); do
+      name="$(basename "$f")"
+      if [ -z "$(sqlite3 "$db" "SELECT 1 FROM schema_migrations WHERE name='$name';")" ]; then
+        sqlite3 "$db" <"$f"
+        sqlite3 "$db" "INSERT INTO schema_migrations(name, at) VALUES('$name', datetime('now'));"
+        echo "applied $name"
+      fi
+    done
+    ;;
+  seed)
+    [ -f seed.sql ] || { echo "db: нет seed.sql" >&2; exit 1; }
+    sqlite3 "$db" <seed.sql
+    echo "seeded $db"
+    ;;
+  reset)
+    rm -f "$db"
+    "$0" migrate
+    if [ -f seed.sql ]; then
+      "$0" seed
+    fi
+    ;;
+  integrity)
+    [ "$(sqlite3 "$db" 'PRAGMA integrity_check;')" = "ok" ] || { echo "db: integrity failed" >&2; exit 1; }
+    echo "integrity ok: $db"
+    ;;
+  status)
+    applied
+    echo "db: $db"
+    sqlite3 "$db" "SELECT name, at FROM schema_migrations ORDER BY at;"
+    ;;
+  *)
+    echo "usage: db migrate|seed|reset|integrity|status" >&2
+    exit 2
+    ;;
+esac

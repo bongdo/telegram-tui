@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+mode="${1:-screen}"
+shift || true
+exec scripts/pty-smoke.sh "$mode" "$@"
