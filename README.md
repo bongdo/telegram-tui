@@ -6,7 +6,8 @@ Mouse-first Telegram client for the terminal, built with Bubble Tea v2, Bubbles
 v2 and Lip Gloss v2. The layout and interaction model are ported from Telegram
 Web A; see [`docs/telegram-web-reference.md`](docs/telegram-web-reference.md).
 
-**Status:** real Telegram user session through gotd/td, with a mock fallback.
+**Status:** real Telegram user session through gotd/td; mock data only with
+`TG_TUI_DEMO=1`.
 Dialogs, server folders and archive, history, text send, replies, edits,
 forwards, file uploads, live updates, reactions, delete, phone/QR login and
 media download work. Inline photos, sticker packs and round-video frames are
@@ -15,17 +16,20 @@ next.
 ## Run
 
 ```sh
-go run .
+direnv allow   # Go, tmux, mpv and chafa from shell.nix
+start          # builds and runs, credentials are picked up automatically
 ```
 
-Without credentials the app runs on mock data. To use a real account, create an
-application at [my.telegram.org/apps](https://my.telegram.org/apps) and provide:
+`start` is `bin/start`: it sources `~/.config/tg-matrix-tui/env` (mode 0600,
+override with `TG_ENV_FILE`), builds the binary and execs it. Credentials are
+kept out of the repo on purpose and are not exported by direnv, so they do not
+leak into every process started in this directory. `TG_TUI_DEMO=1 start` runs on
+mock data.
 
-```sh
-export TG_API_ID=123456
-export TG_API_HASH=0123456789abcdef0123456789abcdef
-go run .
-```
+There is no mock fallback: without credentials the app opens a login screen that
+asks for the app pair, saves it to `~/.config/tg-matrix-tui/config.json` (0600)
+and then continues to phone/QR sign-in. The session is stored next to it, so
+later runs go straight into the account.
 
 The first run asks how to sign in: phone code or QR (Settings → Devices → Link
 Desktop Device). The session is stored in
@@ -159,6 +163,7 @@ restarts. The session file is the only credential and must stay private.
 | `internal/audio/player.go` | mpv IPC playback |
 | `internal/chafa/chafa.go` | image → ANSI through chafa |
 | `scripts/pty-smoke.sh` | tmux pty harness: screen dump + hover latency |
+| `bin/start` | build + run, sources the private credentials file |
 
 ## Testing
 

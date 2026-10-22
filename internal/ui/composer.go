@@ -1,11 +1,6 @@
 package ui
 
-import (
-	"strings"
-	"unicode"
-
-	"github.com/charmbracelet/x/ansi"
-)
+import "strings"
 
 func (m *model) composerTop(g layout) int {
 	return g.center.y + g.contentH - g.composerH
@@ -26,45 +21,6 @@ func (m *model) inputRect(g layout) rect {
 		w: maxInt(1, g.center.w-11),
 		h: m.inputLines(),
 	}
-}
-
-func (m *model) composerLines() []string {
-	return strings.Split(m.ta.Value(), "\n")
-}
-
-func (m *model) composerWordRange() (int, int, bool) {
-	lines := m.composerLines()
-	row := m.ta.Line()
-	if row < 0 || row >= len(lines) {
-		return 0, 0, false
-	}
-	line := []rune(lines[row])
-	start := 0
-	for start < len(line) && unicode.IsSpace(line[start]) {
-		start++
-	}
-	if start >= len(line) {
-		return 0, 0, false
-	}
-	end := start
-	for end < len(line) && !unicode.IsSpace(line[end]) {
-		end++
-	}
-	return start, end, true
-}
-
-func (m *model) taCoord(row, col int) (int, int) {
-	w := m.ta.Width()
-	if w < 1 {
-		w = 1
-	}
-	x := col
-	for i := 0; i < row; i++ {
-		if lw := ansi.StringWidth(m.composerLines()[i]); lw > w {
-			x += ((lw+w-1)/w - 1) * w
-		}
-	}
-	return x, row + m.ta.ScrollYOffset()
 }
 
 func (m *model) sendRect(g layout) rect {

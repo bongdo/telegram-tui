@@ -490,6 +490,8 @@ func clamp(v, lo, hi int) int {
 func (m *model) statusView() (string, color.Color) {
 	t := m.theme
 	switch {
+	case m.setup != nil:
+		return "● Sign in", t.Primary
 	case m.auth != nil:
 		return "● Sign in", t.Primary
 	case m.tgErr != "":

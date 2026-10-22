@@ -71,11 +71,13 @@ Implemented and smoke-tested against a real account:
   Flood-wait middleware plus explicit retries; status bar shows the countdown.
   `TG_DC` picks the primary DC and `TG_TEST_DC=1` switches to Telegram's test
   DCs with isolated `*-test` session, cache and media paths.
-- **Persistence**: `session.json` for the gotd key; SQLite `cache.db` (WAL) for
-  chats, recent messages, media paths and recent emoji; media files under the
-  user cache directory.
-- **Demo mode**: no credentials means mock chats and demo audio/image paths. In
-  real mode the mock list is not shown.
+- **Persistence**: `config.json` for the my.telegram.org app pair, `session.json`
+  for the gotd key; SQLite `cache.db` (WAL) for chats, recent messages, media
+  paths and recent emoji; media files under the user cache directory.
+- **First run**: no credentials opens a login screen, not mock data. The app pair
+  is saved locally, then phone/QR sign-in runs; later launches reuse the session.
+- **Demo mode**: explicit opt-in via `TG_TUI_DEMO=1`; mock chats and demo
+  audio/image paths only.
 
 Verified live: 31 dialogs and 61 messages loaded from the account; QR panel
 rendered (not scanned). Tests cover layout widths, hit-testing, overlays, auth
@@ -122,15 +124,19 @@ fire-and-forget goroutines that emit typed events back.
 
 | Data | Location | Format | Notes |
 |---|---|---|---|
+| API app pair (my.telegram.org) | `~/.config/tg-matrix-tui/config.json` | JSON | secret-ish, 0600, written by the login screen |
 | gotd session | `~/.config/tg-matrix-tui/session.json` | JSON | secret, 0600 |
 | chats, messages, media paths, recent emoji | `~/.config/tg-matrix-tui/cache.db` | SQLite WAL | rebuildable |
 | media | `~/.cache/tg-matrix-tui/media/` | original files | redownloadable |
 | UI state | memory | — | not persisted yet |
 
-Overrides: `TG_SESSION`, `TG_DB`, `TG_CACHE`. `TG_TEST_DC=1` adds a `-test`
-suffix to the default paths so test and production credentials never mix. The
-session is intentionally not in SQLite: it is gotd's serialized auth key and
-should be easy to delete or protect separately.
+Overrides: `TG_API_ID`/`TG_API_HASH` (win over `config.json`), `TG_SESSION`,
+`TG_DB`, `TG_CACHE`. `TG_TUI_DEMO=1` is the only way to get mock data. First run
+opens the login screen, saves the app pair, then asks for phone/QR; later runs
+reuse `session.json` and go straight to the chats. `TG_TEST_DC=1` adds a `-test`
+suffix to session/cache/media paths so test and production never mix. The session
+is intentionally not in SQLite: it is gotd's serialized auth key and should be
+easy to delete or protect separately.
 
 SQLite tables: `chats`, `messages`, `recent_emoji`. Messages are stored as JSON
 payloads with `(peer_key, id, date)` for ordering. History refresh replaces the
@@ -150,7 +156,7 @@ message JSON.
 | chafa for images | Mature ANSI renderer; external process keeps the TUI binary simple |
 | SQLite cache + JSON session | Cache can be invalidated; session stays isolated and easy to protect |
 | Central mouse router | One hit-test source of truth; panels stay position-agnostic |
-| Mock fallback | Allows UI work without credentials; never shown in real mode |
+| Mock fallback | Explicit `TG_TUI_DEMO=1` only; real launches go to the login screen |
 
 ## 6. References
 

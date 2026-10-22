@@ -6,3 +6,5 @@ dev.db
 *.db-shm
 /tg-matrix-tui
 *.test
+/.direnv/
+/.envrc.local

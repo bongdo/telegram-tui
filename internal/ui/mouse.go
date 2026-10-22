@@ -14,6 +14,9 @@ func (m *model) handleClick(e tea.Mouse) tea.Cmd {
 	if g.status.contains(e.X, e.Y) && m.quitRect(g).contains(e.X, e.Y) {
 		return m.close()
 	}
+	if m.setup != nil {
+		return m.setupClick(e)
+	}
 	if m.auth != nil {
 		return m.authClick(e, g)
 	}
@@ -195,7 +198,6 @@ func (m *model) centerClick(g layout, e tea.Mouse) tea.Cmd {
 	msgTop := g.center.y + centerHeaderHeight
 	mv := m.messageView(g)
 	if e.Y >= msgTop && e.Y < msgTop+mv.h {
-		m.ta.ClearSelection()
 		idx, voice, seek, ok := m.messageHit(g, e.X, e.Y)
 		if !ok {
 			return nil
@@ -268,25 +270,6 @@ func (m *model) centerClick(g layout, e tea.Mouse) tea.Cmd {
 		if m.attachRect(g).contains(e.X, e.Y) {
 			m.openAttach()
 			return nil
-		}
-		if ir := m.inputRect(g); ir.contains(e.X, e.Y) {
-			m.composerSel = true
-			m.ta.BeginSelection(e.X-ir.x, e.Y-ir.y)
-			now := time.Now()
-			double := now.Sub(m.composerLastClick) < 450*time.Millisecond
-			m.composerLastClick = now
-			if double {
-				row := m.ta.Line()
-				if start, end, ok := m.composerWordRange(); ok {
-					x1, y1 := m.taCoord(row, start)
-					x2, y2 := m.taCoord(row, end)
-					m.ta.BeginSelection(x2, y2)
-					m.ta.ExtendSelection(x1, y1)
-					m.ta.EndSelection()
-				}
-			}
-		} else {
-			m.ta.ClearSelection()
 		}
 		m.setFocus(focusComposer)
 	}

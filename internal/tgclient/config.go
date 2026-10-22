@@ -1,10 +1,13 @@
 package tgclient
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 )
 
 type Config struct {
@@ -17,8 +20,78 @@ type Config struct {
 	TestDC      bool
 }
 
-// ConfigFromEnv returns enabled=false when Telegram credentials are absent, so
-// the TUI can keep running in demo mode.
+// savedCredentials is the my.telegram.org application pair, kept next to the
+// session so the app can start without exported environment variables. It is
+// not a login credential by itself: the gotd session is.
+type savedCredentials struct {
+	AppID   int    `json:"app_id"`
+	AppHash string `json:"app_hash"`
+}
+
+// ConfigFilePath returns the location of the saved app credentials.
+func ConfigFilePath() (string, error) {
+	dir, err := os.UserConfigDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(dir, "tg-matrix-tui", "config.json"), nil
+}
+
+// ParseCredentials validates what the login screen asks for.
+func ParseCredentials(idRaw, hashRaw string) (int, string, error) {
+	id, err := strconv.Atoi(strings.TrimSpace(idRaw))
+	if err != nil || id <= 0 {
+		return 0, "", errors.New("API ID must be a positive number")
+	}
+	hash := strings.ToLower(strings.TrimSpace(hashRaw))
+	if len(hash) != 32 {
+		return 0, "", errors.New("API hash must be 32 hex characters")
+	}
+	if strings.Trim(hash, "0123456789abcdef") != "" {
+		return 0, "", errors.New("API hash must be 32 hex characters")
+	}
+	return id, hash, nil
+}
+
+// SaveCredentials writes the pair with 0600 and an atomic rename.
+func SaveCredentials(id int, hash string) error {
+	path, err := ConfigFilePath()
+	if err != nil {
+		return err
+	}
+	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+		return err
+	}
+	data, err := json.MarshalIndent(savedCredentials{AppID: id, AppHash: hash}, "", "  ")
+	if err != nil {
+		return err
+	}
+	tmp := path + ".tmp"
+	if err := os.WriteFile(tmp, append(data, '\n'), 0o600); err != nil {
+		return err
+	}
+	return os.Rename(tmp, path)
+}
+
+func loadCredentials() (int, string, bool) {
+	path, err := ConfigFilePath()
+	if err != nil {
+		return 0, "", false
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return 0, "", false
+	}
+	var saved savedCredentials
+	if err := json.Unmarshal(data, &saved); err != nil || saved.AppID <= 0 || saved.AppHash == "" {
+		return 0, "", false
+	}
+	return saved.AppID, saved.AppHash, true
+}
+
+// ConfigFromEnv prefers TG_API_ID/TG_API_HASH, then the saved config.json.
+// enabled=false means "not configured yet": the UI shows the login screen
+// unless TG_TUI_DEMO=1 asks for mock data.
 func ConfigFromEnv() (Config, bool, error) {
 	if os.Getenv("TG_TUI_DEMO") == "1" {
 		return Config{}, false, nil
@@ -26,7 +99,11 @@ func ConfigFromEnv() (Config, bool, error) {
 	idRaw := firstEnv("TG_API_ID", "APP_ID")
 	hash := firstEnv("TG_API_HASH", "APP_HASH")
 	if idRaw == "" && hash == "" {
-		return Config{}, false, nil
+		id, savedHash, ok := loadCredentials()
+		if !ok {
+			return Config{}, false, nil
+		}
+		idRaw, hash = strconv.Itoa(id), savedHash
 	}
 	if idRaw == "" || hash == "" {
 		return Config{}, false, fmt.Errorf("set both TG_API_ID and TG_API_HASH")

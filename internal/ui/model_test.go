@@ -102,6 +102,69 @@ func TestMotionFilterDropsRepeatedCell(t *testing.T) {
 	}
 }
 
+func TestSetupAsksForCredentials(t *testing.T) {
+	t.Setenv("TG_TUI_DEMO", "")
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+	t.Setenv("XDG_CACHE_HOME", t.TempDir())
+	t.Setenv("TG_API_ID", "")
+	t.Setenv("TG_API_HASH", "")
+
+	m := newModel()
+	if m.setup == nil {
+		t.Fatal("expected the login screen instead of mock chats")
+	}
+	if len(m.chats) != 0 {
+		t.Fatalf("mock chats shown on first run: %d", len(m.chats))
+	}
+	resize(m, 120, 36)
+	if got, _ := m.statusView(); !strings.Contains(got, "Sign in") {
+		t.Fatalf("status = %q", got)
+	}
+
+	// Invalid input stays on the screen and explains why.
+	m.setup.id.SetValue("abc")
+	m.setup.hash.SetValue("0123456789abcdef0123456789abcdef")
+	if cmd := m.submitSetup(); cmd != nil {
+		t.Fatal("invalid credentials started a connection")
+	}
+	if m.setup == nil || m.setup.err == "" {
+		t.Fatalf("expected an error on the setup screen, state=%+v", m.setup)
+	}
+
+	// Tab moves between the fields.
+	m.Update(tea.KeyPressMsg{Code: tea.KeyTab})
+	if m.setup.focus != 1 {
+		t.Fatalf("tab focus = %d", m.setup.focus)
+	}
+}
+
+func TestSetupScreenFitsWidth(t *testing.T) {
+	t.Setenv("TG_TUI_DEMO", "")
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+	t.Setenv("XDG_CACHE_HOME", t.TempDir())
+	t.Setenv("TG_API_ID", "")
+	t.Setenv("TG_API_HASH", "")
+
+	for _, size := range [][2]int{{120, 36}, {84, 24}, {70, 20}} {
+		m := newModel()
+		resize(m, size[0], size[1])
+		m.setup.err = "API hash must be 32 hex characters"
+		lines, x, y := m.renderSetup()
+		if len(lines) == 0 {
+			t.Fatalf("%dx%d: no panel", size[0], size[1])
+		}
+		want := ansi.StringWidth(lines[0])
+		for i, line := range lines {
+			if got := ansi.StringWidth(line); got != want {
+				t.Fatalf("%dx%d line %d width = %d, want %d", size[0], size[1], i, got, want)
+			}
+		}
+		if x < 0 || y < 0 || x+want > size[0] || y+len(lines) > size[1] {
+			t.Fatalf("%dx%d: panel at %d,%d size %dx%d does not fit", size[0], size[1], x, y, want, len(lines))
+		}
+	}
+}
+
 func TestReplyComposerFillsWidth(t *testing.T) {
 	m := newModel()
 	resize(m, 100, 30)
@@ -166,91 +229,6 @@ func TestMouseQuitButton(t *testing.T) {
 	}
 	if _, ok := cmd().(tea.QuitMsg); !ok {
 		t.Fatalf("quit click returned %T, want tea.QuitMsg", cmd())
-	}
-}
-
-func composerCell(t *testing.T, m *model, x, y int) tea.Mouse {
-	t.Helper()
-	return tea.Mouse{X: x, Y: y, Button: tea.MouseLeft}
-}
-
-func TestComposerDoubleClickSelectsWord(t *testing.T) {
-	m := newModel()
-	resize(m, 120, 36)
-	m.setFocus(focusComposer)
-	m.ta.SetValue("hello world")
-	m.syncInput()
-	g := m.layout()
-	ir := m.inputRect(g)
-	m.handleClick(composerCell(t, m, ir.x, ir.y))
-	m.Update(tea.MouseReleaseMsg{})
-	m.handleClick(composerCell(t, m, ir.x, ir.y))
-	m.Update(tea.MouseReleaseMsg{})
-
-	if !m.ta.HasSelection() {
-		t.Fatal("double click did not start a selection")
-	}
-	if got := m.ta.SelectedText(); got != "hello" {
-		t.Fatalf("selected = %q, want %q", got, "hello")
-	}
-}
-
-func TestComposerDragSelects(t *testing.T) {
-	m := newModel()
-	resize(m, 120, 36)
-	m.setFocus(focusComposer)
-	m.ta.SetValue("hello world")
-	m.syncInput()
-	g := m.layout()
-	ir := m.inputRect(g)
-	m.handleClick(composerCell(t, m, ir.x, ir.y))
-	m.Update(tea.MouseMotionMsg{X: ir.x + 2, Y: ir.y, Button: tea.MouseLeft})
-	m.Update(tea.MouseReleaseMsg{})
-
-	if !m.ta.HasSelection() {
-		t.Fatal("drag did not start a selection")
-	}
-	if got := m.ta.SelectedText(); got != "he" {
-		t.Fatalf("selected = %q, want %q", got, "he")
-	}
-}
-
-func TestComposerClickOutsideClearsSelection(t *testing.T) {
-	m := newModel()
-	resize(m, 120, 36)
-	m.setFocus(focusComposer)
-	m.ta.SetValue("hello world")
-	g := m.layout()
-	ir := m.inputRect(g)
-	m.handleClick(composerCell(t, m, ir.x, ir.y))
-	m.Update(tea.MouseReleaseMsg{})
-	m.handleClick(composerCell(t, m, ir.x, ir.y))
-	m.Update(tea.MouseReleaseMsg{})
-	if !m.ta.HasSelection() {
-		t.Fatal("composer click did not start a selection")
-	}
-	m.handleClick(composerCell(t, m, m.layout().center.x+10, 5))
-	if m.ta.HasSelection() {
-		t.Fatal("click outside the composer did not clear the selection")
-	}
-}
-
-func TestComposerCopySelectionKey(t *testing.T) {
-	m := newModel()
-	resize(m, 120, 36)
-	m.setFocus(focusComposer)
-	m.ta.SetValue("hello")
-	g := m.layout()
-	ir := m.inputRect(g)
-	m.handleClick(composerCell(t, m, ir.x, ir.y))
-	m.Update(tea.MouseReleaseMsg{})
-	m.handleClick(composerCell(t, m, ir.x, ir.y))
-	m.Update(tea.MouseReleaseMsg{})
-	if !m.ta.HasSelection() {
-		t.Fatal("copy test setup: no selection")
-	}
-	if cmd := m.handleKey(tea.KeyPressMsg{Code: 'c', Mod: tea.ModCtrl | tea.ModShift}); cmd == nil {
-		t.Fatal("copy selection returned no command")
 	}
 }
 

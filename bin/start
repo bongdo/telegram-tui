@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Build and run the client. Credentials come from a private file, not from the
+# project: ~/.config/tg-matrix-tui/env (override with TG_ENV_FILE).
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+env_file=${TG_ENV_FILE:-$HOME/.config/tg-matrix-tui/env}
+if [ -f "$env_file" ]; then
+  set -a
+  # shellcheck disable=SC1090 # user-owned file
+  . "$env_file"
+  set +a
+fi
+
+go build -o tg-matrix-tui .
+exec ./tg-matrix-tui "$@"

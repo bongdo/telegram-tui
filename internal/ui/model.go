@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	bkey "charm.land/bubbles/v2/key"
 	"charm.land/bubbles/v2/textarea"
 	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
@@ -82,13 +81,11 @@ type model struct {
 	lastClick    time.Time
 	lastClickMsg int
 
-	composerLastClick time.Time
-	composerSel       bool
-
 	bridge         *tgclient.Bridge
 	tgStatus       string
 	tgErr          string
 	selfName       string
+	setup          *setupState
 	auth           *authState
 	authField      textinput.Model
 	historyLoading map[string]bool
@@ -161,19 +158,22 @@ func newModel() *model {
 		m.tgStatus = "config error"
 		m.tgErr = cfgErr.Error()
 		m.notice = cfgErr.Error()
+		m.setup = newSetupState()
 	case enabled:
-		m.bridge = tgclient.New(cfg)
-		m.tgStatus = "connecting"
+		m.startBridge(cfg)
+	case os.Getenv("TG_TUI_DEMO") == "1":
+		m.tgStatus = "demo"
+	default:
+		// No credentials yet: first run goes to the login screen, not to mock
+		// data. Submitting it saves config.json and starts the real session.
 		m.chats = nil
 		m.folders = []domain.Folder{
 			{ID: domain.FolderAll, Title: "All"},
 			{ID: domain.FolderArchive, Title: "Archive"},
 		}
-		m.active = 0
+		m.active = -1
 		m.selected = 0
-		m.recentEmoji = m.bridge.RecentEmoji(16)
-	default:
-		m.tgStatus = "demo"
+		m.setup = newSetupState()
 	}
 
 	if p, err := audio.New(); err != nil {
@@ -195,6 +195,24 @@ func (m *model) Init() tea.Cmd {
 	return nil
 }
 
+// startBridge creates the Telegram client. Network work begins in Init or, for
+// the login screen path, right after the credentials are saved.
+func (m *model) startBridge(cfg tgclient.Config) {
+	m.bridge = tgclient.New(cfg)
+	m.tgStatus = "connecting"
+	m.tgErr = ""
+	m.chats = nil
+	m.folders = []domain.Folder{
+		{ID: domain.FolderAll, Title: "All"},
+		{ID: domain.FolderArchive, Title: "Archive"},
+	}
+	m.active = 0
+	m.selected = 0
+	m.chatScroll = 0
+	m.msgScroll = 0
+	m.recentEmoji = m.bridge.RecentEmoji(16)
+}
+
 func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
@@ -213,18 +231,6 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.MouseMotionMsg:
 		e := msg.Mouse()
 		m.hoverX, m.hoverY, m.hover = e.X, e.Y, true
-		if m.composerSel {
-			if ir := m.inputRect(m.layout()); ir.contains(e.X, e.Y) {
-				m.ta.ExtendSelection(e.X-ir.x, e.Y-ir.y)
-			}
-		}
-		return m, nil
-	case tea.MouseReleaseMsg:
-		e := msg.Mouse()
-		if e.Button == tea.MouseLeft && m.composerSel {
-			m.ta.EndSelection()
-			m.composerSel = false
-		}
 		return m, nil
 	case tea.MouseWheelMsg:
 		return m, m.handleWheel(msg.Mouse())
@@ -441,6 +447,10 @@ func (m *model) applyInputStyles() {
 	m.search.SetStyles(is)
 	m.authField.SetStyles(is)
 	m.attachField.SetStyles(is)
+	if m.setup != nil {
+		m.setup.id.SetStyles(is)
+		m.setup.hash.SetStyles(is)
+	}
 	if m.fwd != nil {
 		m.fwd.query.SetStyles(is)
 	}
@@ -453,9 +463,6 @@ func (m *model) toggleTheme() {
 
 func (m *model) send() {
 	text := strings.TrimSpace(m.ta.Value())
-	if m.ta.HasSelection() {
-		text = strings.TrimSpace(m.ta.SelectedText())
-	}
 	if text == "" {
 		return
 	}
@@ -543,6 +550,9 @@ func (m *model) close() tea.Cmd {
 
 func (m *model) handleKey(msg tea.KeyPressMsg) tea.Cmd {
 	key := msg.Keystroke()
+	if m.setup != nil {
+		return m.handleSetupKey(msg)
+	}
 	if m.auth != nil {
 		return m.handleAuthKey(msg)
 	}
@@ -632,9 +642,6 @@ func (m *model) handleKey(msg tea.KeyPressMsg) tea.Cmd {
 	}
 
 	if m.focus == focusComposer {
-		if m.ta.HasSelection() && bkey.Matches(msg, m.ta.KeyMap.CopySelection) {
-			return m.ta.CopySelection()
-		}
 		switch key {
 		case "esc":
 			m.setFocus(focusMessages)
