@@ -145,8 +145,8 @@ func TestConfigFromEnv(t *testing.T) {
 	t.Setenv("TG_API_HASH", "")
 	t.Setenv("APP_ID", "")
 	t.Setenv("APP_HASH", "")
-	if _, ok, err := ConfigFromEnv(); ok || err != nil {
-		t.Fatalf("empty config: ok=%v err=%v", ok, err)
+	if cfg, ok, err := ConfigFromEnv(); !ok || err != nil || cfg.AppID != defaultAppID {
+		t.Fatalf("built-in config: ok=%v id=%d err=%v", ok, cfg.AppID, err)
 	}
 
 	t.Setenv("TG_TUI_DEMO", "1")

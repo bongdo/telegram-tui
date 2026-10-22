@@ -50,8 +50,8 @@ func TestSavedCredentials(t *testing.T) {
 	t.Setenv("TG_DB", "")
 	t.Setenv("TG_CACHE", "")
 
-	if _, enabled, err := ConfigFromEnv(); enabled || err != nil {
-		t.Fatalf("expected unconfigured start, enabled=%v err=%v", enabled, err)
+	if cfg, enabled, err := ConfigFromEnv(); err != nil || !enabled || cfg.AppID != defaultAppID {
+		t.Fatalf("expected built-in pair, enabled=%v id=%d err=%v", enabled, cfg.AppID, err)
 	}
 
 	id, hash, err := ParseCredentials(" 123456 ", "0123456789ABCDEF0123456789ABCDEF")

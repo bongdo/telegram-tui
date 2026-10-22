@@ -10,6 +10,13 @@ import (
 	"strings"
 )
 
+// defaultAppID/defaultAppHash are the my.telegram.org pair registered for this
+// application, so a fresh install can log in without any setup.
+const (
+	defaultAppID   = 34914051
+	defaultAppHash = "8f0d5e02c829de90265925380f068cdf"
+)
+
 type Config struct {
 	AppID       int
 	AppHash     string
@@ -89,9 +96,8 @@ func loadCredentials() (int, string, bool) {
 	return saved.AppID, saved.AppHash, true
 }
 
-// ConfigFromEnv prefers TG_API_ID/TG_API_HASH, then the saved config.json.
-// enabled=false means "not configured yet": the UI shows the login screen
-// unless TG_TUI_DEMO=1 asks for mock data.
+// ConfigFromEnv prefers TG_API_ID/TG_API_HASH, then the saved config.json, then
+// the app pair built into the binary. enabled=false only in demo mode.
 func ConfigFromEnv() (Config, bool, error) {
 	if os.Getenv("TG_TUI_DEMO") == "1" {
 		return Config{}, false, nil
@@ -101,7 +107,7 @@ func ConfigFromEnv() (Config, bool, error) {
 	if idRaw == "" && hash == "" {
 		id, savedHash, ok := loadCredentials()
 		if !ok {
-			return Config{}, false, nil
+			id, savedHash = defaultAppID, defaultAppHash
 		}
 		idRaw, hash = strconv.Itoa(id), savedHash
 	}
