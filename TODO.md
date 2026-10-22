@@ -159,7 +159,7 @@ Bubbles v2 `textarea/selection.go` (`BeginSelection`, `ExtendSelection`,
 - Config file, themes, keymap customization, notifications.
 - Packaging: static binaries and release checksums. Dev shell is done: `shell.nix`
   (go, tmux, mpv, chafa) + `.envrc` with `PATH_add bin`; `start` runs the client
-  with credentials from `~/.config/tg-matrix-tui/env`.
+  with optional credentials from `~/.config/tg-matrix-tui/env`.
 
 ---
 
@@ -171,8 +171,8 @@ Bubbles v2 `textarea/selection.go` (`BeginSelection`, `ExtendSelection`,
 - Multi-select, drafts and typing are not implemented (edit and forward are).
 - Read receipts are always `✓✓`; typing is not shown.
 - Dialogs capped at 100 per folder; history at 60 messages.
-- Only one account/session per process. The saved app pair can only be changed
-  by deleting `~/.config/tg-matrix-tui/config.json`; there is no settings screen.
+- Only one account/session per process. The app pair is compiled into the binary
+  (`internal/tgclient/config.go`); override with `TG_API_ID`/`TG_API_HASH`.
 - Recent emoji are client-side only (no such RPC in the current layer).
 - Message canvas scroll is cached and coalesced; a full `View` costs ~0.42 ms
   and repeated motion events on the same cell are dropped before `Update`

@@ -20,16 +20,14 @@ direnv allow   # Go, tmux, mpv and chafa from shell.nix
 start          # builds and runs, credentials are picked up automatically
 ```
 
-`start` is `bin/start`: it sources `~/.config/tg-matrix-tui/env` (mode 0600,
-override with `TG_ENV_FILE`), builds the binary and execs it. Credentials are
-kept out of the repo on purpose and are not exported by direnv, so they do not
-leak into every process started in this directory. `TG_TUI_DEMO=1 start` runs on
-mock data.
+`start` is `bin/start`: it optionally sources `~/.config/tg-matrix-tui/env`
+(mode 0600, override with `TG_ENV_FILE`), builds the binary and execs it.
+`TG_TUI_DEMO=1 start` runs on mock data.
 
-There is no mock fallback: without credentials the app opens a login screen that
-asks for the app pair, saves it to `~/.config/tg-matrix-tui/config.json` (0600)
-and then continues to phone/QR sign-in. The session is stored next to it, so
-later runs go straight into the account.
+The my.telegram.org app pair is compiled into the binary
+(`internal/tgclient/config.go`), so a fresh install goes straight to phone/QR
+sign-in; `TG_API_ID`/`TG_API_HASH` override it for a different app. The session
+is stored under `~/.config/tg-matrix-tui/`, so later runs go into the account.
 
 The first run asks how to sign in: phone code or QR (Settings → Devices → Link
 Desktop Device). The session is stored in

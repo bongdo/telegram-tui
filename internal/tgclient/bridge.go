@@ -36,10 +36,11 @@ type Bridge struct {
 	events    chan Event
 	authInput chan string
 
-	mu       sync.RWMutex
-	client   *telegram.Client
-	api      *tg.Client
-	peers    map[string]tg.InputPeerClass
+	mu         sync.RWMutex
+	client     *telegram.Client
+	api        *tg.Client
+	dispatcher *tg.UpdateDispatcher
+	peers      map[string]tg.InputPeerClass
 	chats    map[string]domain.Chat
 	folders  []domain.Folder
 	selfID   int64
@@ -152,6 +153,9 @@ func (b *Bridge) run() {
 	dispatcher := tg.NewUpdateDispatcher()
 	loggedIn := qrlogin.OnLoginToken(&dispatcher)
 	b.registerHandlers(dispatcher)
+	b.mu.Lock()
+	b.dispatcher = &dispatcher
+	b.mu.Unlock()
 
 	waiter := floodwait.NewWaiter().
 		WithMaxWait(10 * time.Minute).
@@ -652,6 +656,18 @@ func (b *Bridge) LoadHistory(key string) {
 		}
 	}()
 }
+func (b *Bridge) applyUpdates(ctx context.Context, updates tg.UpdatesClass) {
+	b.mu.RLock()
+	d := b.dispatcher
+	b.mu.RUnlock()
+	if d == nil || updates == nil {
+		return
+	}
+	if err := d.Handle(ctx, updates); err != nil {
+		b.emit(NoticeEvent{Text: "updates", Err: err})
+	}
+}
+
 func (b *Bridge) SendText(key, text string, replyTo int) {
 	b.mu.RLock()
 	api := b.api
@@ -665,17 +681,21 @@ func (b *Bridge) SendText(key, text string, replyTo int) {
 		ctx, cancel := context.WithTimeout(b.context(), 30*time.Second)
 		defer cancel()
 		builder := message.NewSender(api).To(peer)
-		var err error
+		var (
+			res tg.UpdatesClass
+			err error
+		)
 		if replyTo > 0 {
-			_, err = builder.Reply(replyTo).Text(ctx, text)
+			res, err = builder.Reply(replyTo).Text(ctx, text)
 		} else {
-			_, err = builder.Text(ctx, text)
+			res, err = builder.Text(ctx, text)
 		}
 		if err != nil {
 			b.emit(NoticeEvent{Text: "send failed", Err: err})
-		} else {
-			b.emit(StatusEvent{Text: "connected"})
+			return
 		}
+		b.applyUpdates(ctx, res)
+		b.emit(StatusEvent{Text: "connected"})
 	}()
 }
 
@@ -691,7 +711,8 @@ func (b *Bridge) EditText(key string, msgID int, text string) {
 	go func() {
 		ctx, cancel := context.WithTimeout(b.context(), 30*time.Second)
 		defer cancel()
-		if _, err := message.NewSender(api).To(peer).Edit(msgID).Text(ctx, text); err != nil {
+		res, err := message.NewSender(api).To(peer).Edit(msgID).Text(ctx, text)
+		if err != nil {
 			b.emit(NoticeEvent{Text: "edit failed", Err: err})
 			return
 		}

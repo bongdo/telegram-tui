@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 )
 
 // defaultAppID/defaultAppHash are the my.telegram.org pair registered for this

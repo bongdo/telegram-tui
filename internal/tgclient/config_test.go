@@ -1,7 +1,6 @@
 package tgclient
 
 import (
-	"os"
 	"path/filepath"
 	"strings"
 	"testing"

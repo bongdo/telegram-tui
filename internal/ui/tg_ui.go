@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"image/color"
 	"strings"
 	"time"
 
@@ -10,7 +9,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
-	"github.com/mdp/qrterminal/v3"
+	"rsc.io/qr"
 
 	"tg-matrix-tui/internal/domain"
 	"tg-matrix-tui/internal/tgclient"
@@ -563,26 +562,47 @@ type qrState struct {
 	lines []string
 }
 
-func (m *model) showQR(url string) {
-	var b strings.Builder
-	qrterminal.GenerateWithConfig(url, qrterminal.Config{
-		Level:          qrterminal.L,
-		Writer:         &b,
-		HalfBlocks:     true,
-		BlackChar:      " ",
-		WhiteChar:      "█",
-		BlackWhiteChar: "▀",
-		WhiteBlackChar: "▄",
-		QuietZone:      1,
-	})
-	lines := strings.Split(strings.TrimRight(b.String(), "\n"), "\n")
-	width := 0
-	for _, line := range lines {
-		if w := ansi.StringWidth(line); w > width {
-			width = w
-		}
+const qrQuiet = 4
+
+func qrLines(url string) ([]string, bool) {
+	code, err := qr.Encode(url, qr.L)
+	if err != nil {
+		return nil, false
 	}
-	if width+2 > m.w-2 || len(lines)+3 > m.h-2 {
+	size := code.Size + qrQuiet*2
+	dark := func(x, y int) bool {
+		mx, my := x-qrQuiet, y-qrQuiet
+		return mx >= 0 && my >= 0 && mx < code.Size && my < code.Size && code.Black(mx, my)
+	}
+	lines := make([]string, 0, (size+1)/2)
+	for y := 0; y < size; y += 2 {
+		var b strings.Builder
+		b.Grow(size)
+		for x := 0; x < size; x++ {
+			switch top, bottom := dark(x, y), dark(x, y+1); {
+			case top && bottom:
+				b.WriteString("█")
+			case top:
+				b.WriteString("▀")
+			case bottom:
+				b.WriteString("▄")
+			default:
+				b.WriteString(" ")
+			}
+		}
+		lines = append(lines, b.String())
+	}
+	return lines, true
+}
+
+func (m *model) showQR(url string) {
+	lines, ok := qrLines(url)
+	if !ok {
+		m.notice = "QR code could not be generated"
+		return
+	}
+	width := ansi.StringWidth(lines[0])
+	if width+2 > m.w-2 || len(lines)+4 > m.h-2 {
 		m.qr = nil
 		m.notice = "QR code does not fit; enlarge the terminal or choose phone"
 		return
@@ -595,14 +615,10 @@ func (m *model) showQR(url string) {
 func (m *model) renderQR() ([]string, int, int) {
 	t := m.theme
 	bg := lipgloss.Color("#000000")
-	fg := lipgloss.Color("#FFFFFF")
+	qrFG := lipgloss.Color("#000000")
+	qrBG := lipgloss.Color("#FFFFFF")
 	border := t.Primary
-	contentW := 0
-	for _, line := range m.qr.lines {
-		if w := ansi.StringWidth(line); w > contentW {
-			contentW = w
-		}
-	}
+	contentW := ansi.StringWidth(m.qr.lines[0])
 	panelW := contentW + 2
 	panelH := len(m.qr.lines) + 3
 	x := (m.w - panelW) / 2
@@ -614,10 +630,10 @@ func (m *model) renderQR() ([]string, int, int) {
 		y = 0
 	}
 	lines := []string{paint("╭"+strings.Repeat("─", contentW)+"╮", border, bg)}
-	header := t.pad(" Scan with Telegram · Settings → Devices", contentW, fg, bg, true)
+	header := t.pad(" Scan with Telegram · Settings → Devices", contentW, qrFG, qrBG, true)
 	lines = append(lines, paint("│", border, bg)+header+paint("│", border, bg))
 	for _, line := range m.qr.lines {
-		lines = append(lines, paint("│", border, bg)+t.padANSI(line, contentW, bg)+paint("│", border, bg))
+		lines = append(lines, paint("│", border, bg)+paint(line, qrFG, qrBG)+paint("│", border, bg))
 	}
 	lines = append(lines, paint("╰"+strings.Repeat("─", contentW)+"╯", border, bg))
 	return lines, x, y

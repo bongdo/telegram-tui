@@ -215,8 +215,8 @@ UI only sees `internal/domain` events.
 - **Media**: clicking a voice/round/photo asks the bridge to fetch the message,
   download it through gotd's downloader into `TG_CACHE`, and emit
   `MediaReadyEvent`; the UI then plays it or opens the chafa viewer.
-- **Fallback**: no credentials means mock chats and the original demo audio
-  paths.
+- **Demo mode**: `TG_TUI_DEMO=1` means mock chats and the original demo audio
+  paths. The app pair itself is compiled in.
 
 ```
 gotd/td  →  tgclient (auth, caches, typed events)  →  tea.Msg  →  UI model
