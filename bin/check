@@ -20,6 +20,3 @@ else
   nocomments .
 fi
 
-if [ -d docs/product ]; then
-  bin/spec status
-fi

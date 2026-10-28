@@ -52,7 +52,7 @@ func TestConvertTextMessage(t *testing.T) {
 		Out:     false,
 		Views:   1200,
 		Reactions: tg.MessageReactions{Results: []tg.ReactionCount{
-			{Reaction: &tg.ReactionEmoji{Emoticon: "👍"}, Count: 2, ChosenOrder: 1},
+			{Flags: 1, Reaction: &tg.ReactionEmoji{Emoticon: "👍"}, Count: 2, ChosenOrder: 1},
 		}},
 	}
 	got := b.convertMessage(msg, testEntities(), "user:1")

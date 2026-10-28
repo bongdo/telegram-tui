@@ -41,11 +41,11 @@ type Bridge struct {
 	api        *tg.Client
 	dispatcher *tg.UpdateDispatcher
 	peers      map[string]tg.InputPeerClass
-	chats    map[string]domain.Chat
-	folders  []domain.Folder
-	selfID   int64
-	store    *store.Store
-	storeErr error
+	chats      map[string]domain.Chat
+	folders    []domain.Folder
+	selfID     int64
+	store      *store.Store
+	storeErr   error
 
 	ctx     context.Context
 	cancel  context.CancelFunc
@@ -711,8 +711,7 @@ func (b *Bridge) EditText(key string, msgID int, text string) {
 	go func() {
 		ctx, cancel := context.WithTimeout(b.context(), 30*time.Second)
 		defer cancel()
-		res, err := message.NewSender(api).To(peer).Edit(msgID).Text(ctx, text)
-		if err != nil {
+		if _, err := message.NewSender(api).To(peer).Edit(msgID).Text(ctx, text); err != nil {
 			b.emit(NoticeEvent{Text: "edit failed", Err: err})
 			return
 		}
@@ -733,10 +732,12 @@ func (b *Bridge) Forward(fromKey, toKey string, ids []int) {
 	go func() {
 		ctx, cancel := context.WithTimeout(b.context(), 30*time.Second)
 		defer cancel()
-		if _, err := message.NewSender(api).To(to).ForwardIDs(from, ids[0], ids[1:]...).Send(ctx); err != nil {
+		res, err := message.NewSender(api).To(to).ForwardIDs(from, ids[0], ids[1:]...).Send(ctx)
+		if err != nil {
 			b.emit(NoticeEvent{Text: "forward failed", Err: err})
 			return
 		}
+		b.applyUpdates(ctx, res)
 		b.emit(NoticeEvent{Text: "forwarded"})
 	}()
 }
@@ -756,9 +757,12 @@ func (b *Bridge) SendReaction(key string, msgID int, emoji string, add bool) {
 		if add {
 			req.Reaction = []tg.ReactionClass{&tg.ReactionEmoji{Emoticon: emoji}}
 		}
-		if _, err := api.MessagesSendReaction(ctx, req); err != nil {
+		res, err := api.MessagesSendReaction(ctx, req)
+		if err != nil {
 			b.emit(NoticeEvent{Text: "reaction failed", Err: err})
+			return
 		}
+		b.applyUpdates(ctx, res)
 	}()
 }
 
@@ -859,15 +863,17 @@ func (b *Bridge) SendFile(key, path string, replyTo int) {
 			}
 			media = doc
 		}
+		var res tg.UpdatesClass
 		if replyTo > 0 {
-			_, err = builder.Reply(replyTo).Media(ctx, media)
+			res, err = builder.Reply(replyTo).Media(ctx, media)
 		} else {
-			_, err = builder.Media(ctx, media)
+			res, err = builder.Media(ctx, media)
 		}
 		if err != nil {
 			b.emit(NoticeEvent{Text: "upload failed", Err: err})
 			return
 		}
+		b.applyUpdates(ctx, res)
 		b.emit(NoticeEvent{Text: "file sent"})
 		b.emit(StatusEvent{Text: "connected"})
 	}()

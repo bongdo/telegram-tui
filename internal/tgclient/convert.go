@@ -412,10 +412,11 @@ func convertReactions(reactions tg.MessageReactions) []domain.Reaction {
 		default:
 			continue
 		}
+		_, chosen := r.GetChosenOrder()
 		out = append(out, domain.Reaction{
 			Emoji: emoji,
 			Count: r.Count,
-			Mine:  r.ChosenOrder != 0,
+			Mine:  chosen,
 		})
 	}
 	return out
