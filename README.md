@@ -1,4 +1,4 @@
-# Telegram TUI
+# telegram-tui
 
 Project brief: [`PROJECT.md`](PROJECT.md) · roadmap: [`TODO.md`](TODO.md).
 
@@ -13,11 +13,23 @@ forwards, file uploads, live updates, reactions, delete, phone/QR login and
 media download work. Inline photos, sticker packs and round-video frames are
 next.
 
-## Run
+![telegram-tui](docs/screenshots/telegram-tui.png)
+
+## Install
+
+Requires Go 1.26+ and a truecolor terminal.
+
+```sh
+go install github.com/bongdo/telegram-tui@latest
+telegram-tui
+```
+
+From a checkout, `bin/start` builds and runs the client and picks up credentials
+from a private env file:
 
 ```sh
 direnv allow   # Go, tmux, mpv and chafa from shell.nix
-start          # builds and runs, credentials are picked up automatically
+start
 ```
 
 `start` is `bin/start`: it optionally sources `~/.config/telegram-tui/env`
@@ -34,6 +46,9 @@ Desktop Device). The session is stored in
 `~/.config/telegram-tui/session.json` (override with `TG_SESSION`). `TG_PHONE`
 pre-fills the phone prompt, `TG_CACHE` changes the media cache, `TG_DB` changes
 the SQLite cache, and `TG_TUI_DEMO=1` forces mock mode.
+
+An existing `~/.config/tg-matrix-tui` directory (the old name) is used as a
+fallback, so a previous session keeps working after the rename.
 
 `TG_DC` selects the primary DC (1–5, default 2). Set `TG_TEST_DC=1` to use
 Telegram's test DCs; test mode defaults to `session-test.json`,
@@ -186,3 +201,7 @@ same machine rather than reading them as absolute latency.
 3. Round-note still frame via ffmpeg + chafa.
 4. Connection status/reconnect UI and better flood-wait feedback.
 5. Search-in-chat, multi-select, drafts and typing indicators.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
