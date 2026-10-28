@@ -20,7 +20,7 @@ next.
 Requires Go 1.26+ and a truecolor terminal.
 
 ```sh
-go install github.com/bongdo/telegram-tui@latest
+go install github.com/bongdo/telegram-tui@v0.1.1
 telegram-tui
 ```
 
