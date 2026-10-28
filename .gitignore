@@ -8,5 +8,6 @@ dev.db
 /.agent/
 /vault/
 *.test
+*_pragma=*
 /.direnv/
 /.envrc.local
