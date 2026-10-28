@@ -159,7 +159,7 @@ Bubbles v2 `textarea/selection.go` (`BeginSelection`, `ExtendSelection`,
 - Config file, themes, keymap customization, notifications.
 - Packaging: static binaries and release checksums. Dev shell is done: `shell.nix`
   (go, tmux, mpv, chafa) + `.envrc` with `PATH_add bin`; `start` runs the client
-  with optional credentials from `~/.config/tg-matrix-tui/env`.
+  with optional credentials from `~/.config/telegram-tui/env`.
 
 ---
 

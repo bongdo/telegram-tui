@@ -9,7 +9,7 @@ import (
 	"github.com/gotd/td/telegram/message/peer"
 	"github.com/gotd/td/tg"
 
-	"tg-matrix-tui/internal/domain"
+	"github.com/bongdo/telegram-tui/internal/domain"
 )
 
 func testEntities() peer.Entities {

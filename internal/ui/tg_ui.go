@@ -11,8 +11,8 @@ import (
 	"github.com/charmbracelet/x/ansi"
 	"rsc.io/qr"
 
-	"tg-matrix-tui/internal/domain"
-	"tg-matrix-tui/internal/tgclient"
+	"github.com/bongdo/telegram-tui/internal/domain"
+	"github.com/bongdo/telegram-tui/internal/tgclient"
 )
 
 type authState struct {

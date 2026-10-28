@@ -184,14 +184,14 @@ UI only sees `internal/domain` events.
   `client.QR().Auth` and renders the token with `qrterminal`, falling back to a
   2FA password prompt. Sign-up is rejected on purpose.
 - **Session**: `session.FileStorage` at
-  `~/.config/tg-matrix-tui/session.json` by default.
+  `~/.config/telegram-tui/session.json` by default.
 - **DC**: `TG_DC` selects the primary DC (1–5, default 2). `TG_TEST_DC=1`
   uses gotd's test DC list and the `-test` session/cache/media defaults.
 - **Cache**: a local SQLite database (`TG_DB`, default
-  `~/.config/tg-matrix-tui/cache.db`, WAL) stores chats, recent messages, media
+  `~/.config/telegram-tui/cache.db`, WAL) stores chats, recent messages, media
   paths and recently used emoji. It is rebuildable; the session file is the only
   credential. Media files live in `TG_CACHE` (default under
-  `~/.cache/tg-matrix-tui/media`).
+  `~/.cache/telegram-tui/media`).
 - **Dialogs**: `query.GetDialogs`, capped at 100 by the initial request, archived chats skipped.
   Users/groups go to the Chats folder, channels to Channels. Pinned, unread and
   muted flags come from the dialog.

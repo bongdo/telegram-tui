@@ -19,7 +19,7 @@ if ! command -v tmux >/dev/null; then
 fi
 
 cd "$(dirname "$0")/.."
-go build -o tg-matrix-tui .
+go build -o telegram-tui .
 
 mode=${1:-screen}
 cols=${2:-120}
@@ -27,7 +27,7 @@ rows=${3:-40}
 sock="tg-pty-$$"
 trap 'tmux -L "$sock" kill-server 2>/dev/null || true' EXIT
 
-tmux -L "$sock" new-session -d -x "$cols" -y "$rows" env TG_TUI_DEMO=1 ./tg-matrix-tui
+tmux -L "$sock" new-session -d -x "$cols" -y "$rows" env TG_TUI_DEMO=1 ./telegram-tui
 capture() { tmux -L "$sock" capture-pane -p -e; }
 now_ms() { date +%s%3N; }
 send() { tmux -L "$sock" send-keys -H "$@"; }

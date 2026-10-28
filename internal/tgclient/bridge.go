@@ -26,8 +26,8 @@ import (
 	"github.com/gotd/td/tg"
 	"github.com/gotd/td/tgerr"
 
-	"tg-matrix-tui/internal/domain"
-	"tg-matrix-tui/internal/store"
+	"github.com/bongdo/telegram-tui/internal/domain"
+	"github.com/bongdo/telegram-tui/internal/store"
 )
 
 type Bridge struct {

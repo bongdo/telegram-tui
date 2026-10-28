@@ -11,9 +11,9 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 
-	"tg-matrix-tui/internal/audio"
-	"tg-matrix-tui/internal/domain"
-	"tg-matrix-tui/internal/tgclient"
+	"github.com/bongdo/telegram-tui/internal/audio"
+	"github.com/bongdo/telegram-tui/internal/domain"
+	"github.com/bongdo/telegram-tui/internal/tgclient"
 )
 
 type pane int

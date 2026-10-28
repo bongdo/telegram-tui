@@ -4,7 +4,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"tg-matrix-tui/internal/domain"
+	"github.com/bongdo/telegram-tui/internal/domain"
 )
 
 func TestCacheRoundTrip(t *testing.T) {

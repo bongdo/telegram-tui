@@ -9,7 +9,7 @@ import (
 	"github.com/gotd/td/telegram/message/peer"
 	"github.com/gotd/td/tg"
 
-	"tg-matrix-tui/internal/domain"
+	"github.com/bongdo/telegram-tui/internal/domain"
 )
 
 func (b *Bridge) chatFromDialog(dialog *tg.Dialog, entities peer.Entities) (domain.Chat, tg.InputPeerClass, bool) {

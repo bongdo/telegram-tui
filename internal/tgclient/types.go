@@ -1,6 +1,6 @@
 package tgclient
 
-import "tg-matrix-tui/internal/domain"
+import "github.com/bongdo/telegram-tui/internal/domain"
 
 type AuthKind string
 

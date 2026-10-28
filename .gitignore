@@ -4,7 +4,9 @@
 dev.db
 *.db-wal
 *.db-shm
-/tg-matrix-tui
+/telegram-tui
+/.agent/
+/vault/
 *.test
 /.direnv/
 /.envrc.local

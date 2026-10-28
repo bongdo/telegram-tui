@@ -1,4 +1,4 @@
-# tg-matrix-tui — project brief
+# telegram-tui — project brief
 
 A mouse-first Telegram **user** client that runs in the terminal. It is not a
 bot UI and not a Matrix bridge: the directory name is historical, the product is
@@ -124,10 +124,10 @@ fire-and-forget goroutines that emit typed events back.
 
 | Data | Location | Format | Notes |
 |---|---|---|---|
-| API app pair (my.telegram.org) | `~/.config/tg-matrix-tui/config.json` | JSON | secret-ish, 0600, written by the login screen |
-| gotd session | `~/.config/tg-matrix-tui/session.json` | JSON | secret, 0600 |
-| chats, messages, media paths, recent emoji | `~/.config/tg-matrix-tui/cache.db` | SQLite WAL | rebuildable |
-| media | `~/.cache/tg-matrix-tui/media/` | original files | redownloadable |
+| API app pair (my.telegram.org) | `~/.config/telegram-tui/config.json` | JSON | secret-ish, 0600, written by the login screen |
+| gotd session | `~/.config/telegram-tui/session.json` | JSON | secret, 0600 |
+| chats, messages, media paths, recent emoji | `~/.config/telegram-tui/cache.db` | SQLite WAL | rebuildable |
+| media | `~/.cache/telegram-tui/media/` | original files | redownloadable |
 | UI state | memory | — | not persisted yet |
 
 Overrides: `TG_API_ID`/`TG_API_HASH` (win over `config.json`), `TG_SESSION`,

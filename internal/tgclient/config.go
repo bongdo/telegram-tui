@@ -62,7 +62,7 @@ func ConfigFromEnv() (Config, bool, error) {
 		if err != nil {
 			return Config{}, false, err
 		}
-		dir = filepath.Join(dir, "tg-matrix-tui")
+		dir = appDir(dir, "telegram-tui")
 		if err := os.MkdirAll(dir, 0o700); err != nil {
 			return Config{}, false, err
 		}
@@ -77,7 +77,7 @@ func ConfigFromEnv() (Config, bool, error) {
 		if err != nil {
 			base = os.TempDir()
 		}
-		cacheDir = filepath.Join(base, "tg-matrix-tui", "media"+suffix)
+		cacheDir = filepath.Join(appDir(base, "telegram-tui"), "media"+suffix)
 	}
 	if err := os.MkdirAll(cacheDir, 0o700); err != nil {
 		return Config{}, false, err
@@ -95,6 +95,18 @@ func ConfigFromEnv() (Config, bool, error) {
 		DC:          dc,
 		TestDC:      testDC,
 	}, true, nil
+}
+
+// shortcut: read the pre-rename directory, drop when no install predates telegram-tui.
+func appDir(base, name string) string {
+	next := filepath.Join(base, name)
+	legacy := filepath.Join(base, "tg-matrix-tui")
+	if _, err := os.Stat(next); err != nil {
+		if _, err := os.Stat(legacy); err == nil {
+			return legacy
+		}
+	}
+	return next
 }
 
 func firstEnv(names ...string) string {

@@ -1,4 +1,4 @@
-module tg-matrix-tui
+module github.com/bongdo/telegram-tui
 
 go 1.26.3
 

@@ -1,6 +1,6 @@
 package ui
 
-import "tg-matrix-tui/internal/domain"
+import "github.com/bongdo/telegram-tui/internal/domain"
 
 const (
 	folderAll      = domain.FolderAll

@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 # Build and run the client. Credentials come from a private file, not from the
-# project: ~/.config/tg-matrix-tui/env (override with TG_ENV_FILE).
+# project: ~/.config/telegram-tui/env (override with TG_ENV_FILE).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-env_file=${TG_ENV_FILE:-$HOME/.config/tg-matrix-tui/env}
+env_file=${TG_ENV_FILE:-$HOME/.config/telegram-tui/env}
+if [ ! -f "$env_file" ] && [ -f "$HOME/.config/tg-matrix-tui/env" ]; then
+  env_file=$HOME/.config/tg-matrix-tui/env
+fi
 if [ -f "$env_file" ]; then
   set -a
   # shellcheck disable=SC1090 # user-owned file
@@ -12,5 +15,5 @@ if [ -f "$env_file" ]; then
   set +a
 fi
 
-go build -o tg-matrix-tui .
-exec ./tg-matrix-tui "$@"
+go build -o telegram-tui .
+exec ./telegram-tui "$@"

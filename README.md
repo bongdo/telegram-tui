@@ -20,18 +20,18 @@ direnv allow   # Go, tmux, mpv and chafa from shell.nix
 start          # builds and runs, credentials are picked up automatically
 ```
 
-`start` is `bin/start`: it optionally sources `~/.config/tg-matrix-tui/env`
+`start` is `bin/start`: it optionally sources `~/.config/telegram-tui/env`
 (mode 0600, override with `TG_ENV_FILE`), builds the binary and execs it.
 `TG_TUI_DEMO=1 start` runs on mock data.
 
 The my.telegram.org app pair is compiled into the binary
 (`internal/tgclient/config.go`), so a fresh install goes straight to phone/QR
 sign-in; `TG_API_ID`/`TG_API_HASH` override it for a different app. The session
-is stored under `~/.config/tg-matrix-tui/`, so later runs go into the account.
+is stored under `~/.config/telegram-tui/`, so later runs go into the account.
 
 The first run asks how to sign in: phone code or QR (Settings → Devices → Link
 Desktop Device). The session is stored in
-`~/.config/tg-matrix-tui/session.json` (override with `TG_SESSION`). `TG_PHONE`
+`~/.config/telegram-tui/session.json` (override with `TG_SESSION`). `TG_PHONE`
 pre-fills the phone prompt, `TG_CACHE` changes the media cache, `TG_DB` changes
 the SQLite cache, and `TG_TUI_DEMO=1` forces mock mode.
 
@@ -119,9 +119,9 @@ Three separate things, on purpose:
 
 | What | Where | Format |
 |---|---|---|
-| gotd session key | `~/.config/tg-matrix-tui/session.json` (`TG_SESSION`) | JSON, **secret** |
-| chats, messages, media paths, recent emoji | `~/.config/tg-matrix-tui/cache.db` (`TG_DB`) | SQLite (WAL) |
-| downloaded media | `~/.cache/tg-matrix-tui/media/` (`TG_CACHE`) | original files |
+| gotd session key | `~/.config/telegram-tui/session.json` (`TG_SESSION`) | JSON, **secret** |
+| chats, messages, media paths, recent emoji | `~/.config/telegram-tui/cache.db` (`TG_DB`) | SQLite (WAL) |
+| downloaded media | `~/.cache/telegram-tui/media/` (`TG_CACHE`) | original files |
 
 The SQLite cache is a rebuildable convenience: dialogs and 60 recent messages
 per chat are cached, media paths are remembered, and recent emoji survive

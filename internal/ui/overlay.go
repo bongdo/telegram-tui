@@ -8,7 +8,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 
-	"tg-matrix-tui/internal/chafa"
+	"github.com/bongdo/telegram-tui/internal/chafa"
 )
 
 type ctxKind int

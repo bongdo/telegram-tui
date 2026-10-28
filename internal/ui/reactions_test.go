@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"tg-matrix-tui/internal/domain"
-	"tg-matrix-tui/internal/tgclient"
+	"github.com/bongdo/telegram-tui/internal/domain"
+	"github.com/bongdo/telegram-tui/internal/tgclient"
 )
 
 func TestReactionsUpdateRenders(t *testing.T) {

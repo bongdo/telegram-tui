@@ -12,9 +12,9 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"github.com/charmbracelet/x/ansi"
 
-	"tg-matrix-tui/internal/chafa"
-	"tg-matrix-tui/internal/domain"
-	"tg-matrix-tui/internal/tgclient"
+	"github.com/bongdo/telegram-tui/internal/chafa"
+	"github.com/bongdo/telegram-tui/internal/domain"
+	"github.com/bongdo/telegram-tui/internal/tgclient"
 )
 
 func TestMain(m *testing.M) {

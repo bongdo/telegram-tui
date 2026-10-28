@@ -12,7 +12,7 @@ import (
 
 	_ "modernc.org/sqlite"
 
-	"tg-matrix-tui/internal/domain"
+	"github.com/bongdo/telegram-tui/internal/domain"
 )
 
 type Store struct {

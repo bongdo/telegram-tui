@@ -6,7 +6,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 
-	"tg-matrix-tui/internal/ui"
+	"github.com/bongdo/telegram-tui/internal/ui"
 )
 
 func main() {
